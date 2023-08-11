@@ -126,6 +126,8 @@ function createPanZoom(domElement, options) {
     smoothMoveTo: smoothMoveTo, 
     centerOn: centerOn,
     zoomTo: publicZoomTo,
+    moveToCenterOfElement: moveToCenterOfElement,
+    moveToCenterOfBounds: moveToCenterOfBounds,
     zoomAbs: zoomAbs,
     smoothZoom: smoothZoom,
     smoothZoomAbs: smoothZoomAbs,
@@ -420,8 +422,8 @@ function createPanZoom(domElement, options) {
       transform.scale *= ratio;
       keepTransformInsideBounds();
     } else {
-      var transformAdjusted = keepTransformInsideBounds();
-      if (!transformAdjusted) transform.scale *= ratio;
+      keepTransformInsideBounds();
+      transform.scale *= ratio;
     }
 
     triggerEvent('zoom');
@@ -709,6 +711,44 @@ function createPanZoom(domElement, options) {
       clearTimeout(pendingClickEventTimeout);
       pendingClickEventTimeout = 0;
     }
+  }
+
+  /**
+   * Calculate the center of a given bounding rectangle's position from our container viewpoint
+   * @param {DOMRect} elemBounds
+   */
+  function getCenterOfBounds(elemBounds) {
+    const containerBounds = owner.getBoundingClientRect();
+
+    const centerX = -elemBounds.left + (((containerBounds.width / 2) - (elemBounds.width / 2)));
+    const centerY = -elemBounds.top + (((containerBounds.height / 2) - (elemBounds.height / 2)) + containerBounds.top);
+
+    const newX = transform.x + centerX;
+    const newY = transform.y + centerY;
+
+    return { x: newX, y: newY };
+  }
+
+  /**
+   * Moves the view to the center of element
+   * @param {Element} element get the center of this HTML element
+   * @param {Number} xOffset offset x pixels from center horizontally
+   * @param {Number} yOffset offset y pixels from center vertically
+   */
+  function moveToCenterOfElement(element, xOffset = 0, yOffset = 0) {
+    moveToCenterOfBounds(element.getBoundingClientRect(), xOffset, yOffset);
+  }
+
+
+  /** 
+   * Moves the view to the center of the bounding rectangle
+   * @param {DOMRect} domRect
+   * @param {Number} xOffset offset x pixels from center horizontally
+   * @param {Number} yOffset offset y pixels from center vertically
+   */
+  function moveToCenterOfBounds(domRect, xOffset = 0, yOffset = 0) {
+    const { x, y } = getCenterOfBounds(domRect);
+    moveTo(x + xOffset, y + yOffset);
   }
 
   function handlePotentialClickEvent(e) {
@@ -1327,12 +1367,12 @@ function makeSvgController(svgElement, options) {
   }
 
   function getBBox() {
-    var bbox =  svgElement.getBBox();
+    var boundingBox =  svgElement.getBBox();
     return {
-      left: bbox.x,
-      top: bbox.y,
-      width: bbox.width,
-      height: bbox.height,
+      left: boundingBox.x,
+      top: boundingBox.y,
+      width: boundingBox.width,
+      height: boundingBox.height,
     };
   }
 

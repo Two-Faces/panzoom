@@ -28,6 +28,8 @@ declare module "panzoom" {
     maxZoom?: number;
     minZoom?: number;
     boundsPadding?: number;
+    moveToCenterOfElement: (element: Element, xOffset: number, yOffset: number) => void;
+    moveToCenterOfBounds: (bounds: DOMRect, xOffset: number, yOffset: number) => void;
     zoomDoubleClickSpeed?: number;
     zoomSpeed?: number;
     initialX?: number,
