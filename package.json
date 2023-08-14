@@ -1,6 +1,6 @@
 {
   "name": "aries-panzoom",
-  "version": "9.4.5",
+  "version": "9.4.61",
   "description": "Extensible, mobile friendly pan and zoom framework (supports DOM and SVG).",
   "main": "index.js",
   "scripts": {

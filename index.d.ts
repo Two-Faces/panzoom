@@ -28,8 +28,8 @@ declare module "panzoom" {
     maxZoom?: number;
     minZoom?: number;
     boundsPadding?: number;
-    moveToCenterOfElement: (element: Element, xOffset: number, yOffset: number) => void;
-    moveToCenterOfBounds: (bounds: DOMRect, xOffset: number, yOffset: number) => void;
+    moveToCenterOfElement: (element: Element, xOffset: number, yOffset: number, smooth: boolean) => Promise<any>;
+    moveToCenterOfBounds: (bounds: DOMRect, xOffset: number, yOffset: number, smooth: boolean) => Promise<any>;
     zoomDoubleClickSpeed?: number;
     zoomSpeed?: number;
     initialX?: number,
@@ -59,7 +59,7 @@ declare module "panzoom" {
     dispose: () => void;
     moveBy: (dx: number, dy: number, smooth: boolean) => void;
     moveTo: (x: number, y: number) => void;
-    smoothMoveTo: (x: number, y: number) => void;
+    smoothMoveTo: (x: number, y: number) => Promise<any>;
     centerOn: (ui: any) => void;
     zoomTo: (clientX: number, clientY: number, scaleMultiplier: number) => void;
     zoomAbs: (clientX: number, clientY: number, zoomLevel: number) => void;
@@ -67,12 +67,12 @@ declare module "panzoom" {
       clientX: number,
       clientY: number,
       scaleMultiplier: number
-    ) => void;
+    ) => Promise<any>;
     smoothZoomAbs: (
       clientX: number,
       clientY: number,
       toScaleValue: number
-    ) => void;
+    ) => Promise<any>;
     getTransform: () => Transform;
     showRectangle: (rect: ClientRect) => void;
     pause: () => void;

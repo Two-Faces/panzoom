@@ -421,10 +421,10 @@ function createPanZoom(domElement, options) {
       transform.scale *= ratio;
       keepTransformInsideBounds();
     } else {
-      //   var transformAdjusted = keepTransformInsideBounds();
-      //       if (!transformAdjusted) transform.scale *= ratio;
-      keepTransformInsideBounds();
-      transform.scale *= ratio;
+      var transformAdjusted = keepTransformInsideBounds();
+      if (!transformAdjusted) transform.scale *= ratio;
+      // keepTransformInsideBounds();
+      // transform.scale *= ratio;
     }
 
     triggerEvent('zoom');
@@ -455,7 +455,7 @@ function createPanZoom(domElement, options) {
   }
 
   function smoothMoveTo(x, y){
-    internalMoveBy(x - transform.x, y - transform.y, true);
+    return internalMoveBy(x - transform.x, y - transform.y, true);
   }
 
   function internalMoveBy(dx, dy, smooth) {
@@ -470,13 +470,23 @@ function createPanZoom(domElement, options) {
     var lastX = 0;
     var lastY = 0;
 
-    moveByAnimation = animate(from, to, {
-      step: function (v) {
-        moveBy(v.x - lastX, v.y - lastY);
+    return new Promise((resolve) => {
+      moveByAnimation = animate(from, to, {
+        step: function (v) {
+          moveBy(v.x - lastX, v.y - lastY);
 
-        lastX = v.x;
-        lastY = v.y;
-      }
+          lastX = v.x;
+          lastY = v.y;
+        },
+        done: () => {
+          triggerMoveEnd(api);
+
+          resolve({
+            transform,
+            api
+          });
+        }
+      });
     });
   }
 
@@ -735,21 +745,24 @@ function createPanZoom(domElement, options) {
    * @param {Element} element get the center of this HTML element
    * @param {Number} xOffset offset x pixels from center horizontally
    * @param {Number} yOffset offset y pixels from center vertically
+   * @param {Boolean} smooth
    */
-  function moveToCenterOfElement(element, xOffset = 0, yOffset = 0) {
-    moveToCenterOfBounds(element.getBoundingClientRect(), xOffset, yOffset);
+  function moveToCenterOfElement(element, xOffset = 0, yOffset = 0, smooth = false) {
+    return moveToCenterOfBounds(element.getBoundingClientRect(), xOffset, yOffset, smooth);
   }
 
 
-  /** 
+  /**
    * Moves the view to the center of the bounding rectangle
    * @param {DOMRect} domRect
    * @param {Number} xOffset offset x pixels from center horizontally
    * @param {Number} yOffset offset y pixels from center vertically
+   * @param {Boolean} smooth
    */
-  function moveToCenterOfBounds(domRect, xOffset = 0, yOffset = 0) {
+  function moveToCenterOfBounds(domRect, xOffset = 0, yOffset = 0, smooth = false) {
     const { x, y } = getCenterOfBounds(domRect);
-    moveTo(x + xOffset, y + yOffset);
+
+    return internalMoveBy(x + xOffset - transform.x, y + yOffset - transform.y, smooth);
   }
 
   function handlePotentialClickEvent(e) {
@@ -929,11 +942,20 @@ function createPanZoom(domElement, options) {
     smoothScroll.cancel();
     cancelZoomAnimation();
 
-    zoomToAnimation = animate(from, to, {
-      step: function (v) {
-        zoomAbs(clientX, clientY, v.scale);
-      },
-      done: triggerZoomEnd
+    return new Promise((resolve) => {
+      zoomToAnimation = animate(from, to, {
+        step: function (v) {
+          zoomAbs(clientX, clientY, v.scale);
+        },
+        done: () => {
+          resolve({
+            transform,
+            api
+          });
+
+          triggerZoomEnd();
+        }
+      });
     });
   }
 
@@ -945,10 +967,20 @@ function createPanZoom(domElement, options) {
     smoothScroll.cancel();
     cancelZoomAnimation();
 
-    zoomToAnimation = animate(from, to, {
-      step: function (v) {
-        zoomAbs(clientX, clientY, v.scale);
-      }
+    return new Promise((resolve) => {
+      zoomToAnimation = animate(from, to, {
+        step: function (v) {
+          zoomAbs(clientX, clientY, v.scale);
+        },
+        done: () => {
+          resolve({
+            transform,
+            api
+          });
+
+          triggerZoomEnd();
+        }
+      });
     });
   }
 
@@ -997,6 +1029,10 @@ function createPanZoom(domElement, options) {
 
   function triggerZoomEnd() {
     triggerEvent('zoomend');
+  }
+
+  function triggerMoveEnd() {
+    triggerEvent('moveend');
   }
 
   function triggerEvent(name) {
@@ -1108,7 +1144,6 @@ function autoRun() {
       return;
     }
     var options = collectOptions(panzoomScript);
-    console.log(options);
     window[globalName] = createPanZoom(el, options);
   }
 
